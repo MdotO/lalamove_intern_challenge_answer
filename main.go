@@ -1,14 +1,12 @@
 package main
-// Used a Masterminds/semver instead of the given one since this one gave auseful utility function sort.
 import (
 	"context"
 	"fmt"
 	"os"
 	"log"
 	"bufio"
-	"sort"
 	"strings"
-	"github.com/Masterminds/semver"
+	"github.com/coreos/go-semver/semver"
 	"github.com/google/go-github/github"
 )
 
@@ -23,9 +21,9 @@ type RepoInfo struct{
 
 //Function that distinguishes between two version ,whether the first one has a greater major or minor version or both
 func GreaterMajorOrMinor(a *semver.Version,b *semver.Version) bool{
-	if (a.Major() > b.Major()||
-	    (a.Major() == b.Major()&&
-	     a.Minor() > b.Minor())){
+	if (a.Major > b.Major||
+	    (a.Major == b.Major&&
+	     a.Minor > b.Minor)){
 		return true
 	}
 	return false
@@ -36,30 +34,31 @@ func LatestVersions(releases []*semver.Version, minVersion *semver.Version) []*s
 	var versionSlice []*semver.Version
 	// This is just an example structure of the code, if you implement this interface, the test cases in main_test.go are very easy to run
 	//Sort the released versions(O(nlogn)) and then perform checks on them in linear time   
-	sort.Sort(semver.Collection(releases))
+	semver.Sort(releases)
 	x := len(releases)
 	//base condition
 	if(x==0){
 		return versionSlice
 	}
- 	//Being sorted ,just compare and append when cosnecutive versions do differ by either major/minor versions 
+ 	//Being sorted ,just compare and append when cosnecutive versions do differ by either major/minor versions. O(n) 
 	for i,r := range releases{
 		if (i!=0){
 			//r is current version in consideration i.e releases[i]
 			if (GreaterMajorOrMinor(r,releases[i-1]) &&
-			    releases[i-1].Compare(minVersion)>=0){
+			    releases[i-1].Compare(*minVersion)>=0){
 				versionSlice = append(versionSlice,releases[i-1])
 			}
 		}
 	}
 	//Append the last element always!!!
-	if (releases[x-1].Compare(minVersion)>=0){
+	if (releases[x-1].Compare(*minVersion)>=0){
 		versionSlice = append(versionSlice,releases[x-1])
 	}
-  	//reversing the obtained list to get the desired format
+  	//reversing the obtained list to get the desired format . O(n)
    	for i, j := 0, len(versionSlice)-1; i < j; i, j = i+1, j-1 {
         	versionSlice[i], versionSlice[j] = versionSlice[j], versionSlice[i]
     	}
+		//Total runtime O(nlogn) where n is the number of versions in input
 		return versionSlice
 	}
 
@@ -75,6 +74,7 @@ func main() {
   	if(err!=nil){
     	log.Fatal(err)
   	}
+	//Close file at the end by deferring it
   	defer file.Close()
 	//Start scanning
   	scanner := bufio.NewScanner(file)
@@ -103,14 +103,14 @@ func main() {
 		if err != nil {
 			panic(err) // is this really a good way?
 		}
-		minVersion,_ := semver.NewVersion(Repos[x].minVersion)
+		minVersion := semver.New(Repos[x].minVersion)
 		allReleases := make([]*semver.Version, len(releases))
 		for i, release := range releases {
 			versionString := *release.TagName
 			if versionString[0] == 'v' {
 				versionString = versionString[1:]
 			}
-			allReleases[i],_ = semver.NewVersion(versionString)
+			allReleases[i] = semver.New(versionString)
 		}
 
 		versionSlice := LatestVersions(allReleases, minVersion)
