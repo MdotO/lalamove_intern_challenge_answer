@@ -69,7 +69,11 @@ func LatestVersions(releases []*semver.Version, minVersion *semver.Version) []*s
 func main() {
 	// Github
 	//NOTE: Importantly, the file format {repository,minVersion as line1 with repository owner,name & minversion in ALL NEXT 
-	//LINES TILL EOF }
+	//LINES TILL EOF 
+	
+	if(len(os.Args) !=2){
+		log.Fatal("Must specify 1 and only argument")
+	}
 	file,err := os.Open(os.Args[1])
   	if(err!=nil){
     	log.Fatal(err)
