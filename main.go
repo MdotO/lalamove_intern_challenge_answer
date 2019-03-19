@@ -93,7 +93,7 @@ func main() {
     		temp.name = (strings.Split((strings.Split(text,","))[0],"/"))[0]
     		temp.repo = (strings.Split((strings.Split(text,","))[0],"/"))[1]
     		temp.minVersion = strings.Split(text,",")[1]
-		//Append to the list
+			//Append to the list
     		Repos = append(Repos,temp)
   	}
   	length_repos := len(Repos)
@@ -101,7 +101,8 @@ func main() {
 	for x :=0; x<length_repos;x++{
 		releases, _, err := client.Repositories.ListReleases(ctx, Repos[x].name, Repos[x].repo, opt)
 		if err != nil {
-			panic(err) // is this really a good way?
+			fmt.Printf("Error involving %s/%s %s\n",Repos[x].name,Repos[x].repo,err);
+			continue
 		}
 		minVersion := semver.New(Repos[x].minVersion)
 		allReleases := make([]*semver.Version, len(releases))
@@ -114,11 +115,11 @@ func main() {
 		}
 
 		versionSlice := LatestVersions(allReleases, minVersion)
-		//Print in format(fmt.Printf()) as described in specification. 
-		fmt.Printf("latest versions of %s/%s: %s", Repos[x].name,Repos[x].repo,versionSlice)
-		//New line print if and only if not reached the end 
-  		if(x<length_repos-1){
-    			fmt.Println("")
-		}
+		//Print in format(fmt.Printf()) as described in specification.
+		//New line print if and only if not reached the end 		
+		fmt.Printf("latest versions of %s/%s: %s\n", Repos[x].name,Repos[x].repo,versionSlice)
+		
+  		
 	}
+	
 }
